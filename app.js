@@ -1,8 +1,15 @@
 const express = require('express');
-const fetch = require('node-fetch'); // npm install node-fetch
+const fetch = require('node-fetch');
+const path = require('path');
 const app = express();
+
 app.use(express.json());
-app.use(express.static('.')); // 服 index.html
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  next();
+});
+app.use(express.static(path.join(__dirname, '.'))); // 服 index.html
 
 const JWT_URL = process.env.JWT_URL || "https://beta.aiipo.jp/apmng/chat/get_jwt.php";
 const CHAT_URL = process.env.CHAT_URL || "https://x162-43-21-174.static.xvps.ne.jp/chat";
@@ -72,7 +79,6 @@ app.post('/v1/chat/completions', async (req, res) => {
     }
 
     if (!stream) {
-      // Non-stream: 聚合 SSE 或 JSON
       const contentType = srcResp.headers.get("content-type") || "";
       if (contentType.includes("application/json")) {
         const j = await srcResp.json();
@@ -80,7 +86,6 @@ app.post('/v1/chat/completions', async (req, res) => {
         const id = `chatcmpl-${Date.now()}`;
         return res.json(openAiNonStreamResponse({ id, model, text }));
       }
-      // Fallback SSE 聚合 (简化版)
       const reader = srcResp.body.getReader();
       const decoder = new TextDecoder();
       let buf = "", acc = "";
@@ -113,7 +118,6 @@ app.post('/v1/chat/completions', async (req, res) => {
       const id = `chatcmpl-${Date.now()}`;
       res.json(openAiNonStreamResponse({ id, model, text: acc }));
     } else {
-      // Stream: 转发 SSE
       res.set('Content-Type', 'text/event-stream');
       res.set('Cache-Control', 'no-cache');
       res.set('Connection', 'keep-alive');
