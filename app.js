@@ -1,5 +1,4 @@
 const express = require('express');
-const fetch = require('node-fetch');
 const path = require('path');
 const app = express();
 
@@ -27,7 +26,7 @@ const reasoningEffortMap = { minimal: 512, low: 2048, medium: 8192, high: 24576 
 
 async function getJwt() {
   const headers = { 'Cookie': FULL_COOKIE, 'User-Agent': USER_AGENT, 'Referer': REFERER, 'x-requested-with': 'XMLHttpRequest' };
-  const resp = await fetch(JWT_URL, { method: 'GET', headers });
+  const resp = await fetch(JWT_URL, { method: 'GET', headers }); // Native fetch
   if (!resp.ok) throw new Error(`get_jwt failed: ${resp.status} ${await resp.text()}`);
   const j = await resp.json();
   if (!j.jwt) throw new Error("no jwt");
@@ -197,5 +196,5 @@ function makeChunkObject({ id, model, fragment, finish }) {
   return base;
 }
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 10000; // Render 默认 10000
 app.listen(port, () => console.log(`Server on port ${port}`));
